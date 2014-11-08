@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ITalk</string>
+    <string name="abmenu_action_settings">Settings</string>
+    <string name="title_activity_ConnectDevice">ConnectDevice</string>
+
+
+    <string name="patdatlabel">-- Patient Data --</string>
+    <string name="patientdata"> </string>
+
+    <string name="wearablelabel">-- Wearable Device Data --</string>
+    <string name="devstatlabel">Device Status: </string>
+    <string name="batterylvl">Battery Life: </string>
+
+    <string name="bufdatlabel">-- Buffer Data --</string>
+
+    <string name="statusdatlabel">Status:</string>
+
+    <string name="enter_patient_id">Please Enter Your Patient ID Number</string>
+
+</resources>
