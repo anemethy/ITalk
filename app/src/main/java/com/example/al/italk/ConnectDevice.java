@@ -1,13 +1,20 @@
 package com.example.al.italk;
 
-/**
- * Created by Al Nemethy on 11/5/14.
+/***
+ * ITalk App for Android Version 0.5 Beta
+ * Author: Albert N. Nemethy
+ * Last UpDate: 11-10-2014
+ * Copyright (c) Autonomous Engineering of VT
+ * All Rights Reserved
+ *
+ * ConnectDevice.java
  */
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
+import android.os.Handler;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -19,12 +26,12 @@ import java.util.UUID;
 
 public class ConnectDevice extends Thread implements Runnable
 { public static enum ConnectAs {None, Client, Server}      // Make available to all classes
-  public static enum LogStat {Disabled, Enabled, Paired, Connected}    // Make available to all classes
+  public static enum LogStat {Disabled, Enabled, Paired, Connected, closed}   // Make available to all classes
 
-  private ConnectAs ourConnectionMethod = ConnectAs.Client;  // Initialize our connection method
+  private ConnectAs ourConnectionMethod = ConnectAs.Client;     // Initialize our connection method
   private final String ourName = "ITalk";
 
-  private LogStat ourLogicalStatus = LogStat.Disabled;
+  private LogStat ourLogicalStatus = LogStat.Disabled;     // Start off disabled
   private int ourProgressCode = 0;
   private TextView ourStatusTF = null;
   private BluetoothAdapter ourBTAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -32,20 +39,24 @@ public class ConnectDevice extends Thread implements Runnable
   private BluetoothServerSocket ourServerSocket;           // This probably will not be used
   private BluetoothSocket ourSocket = null;
   private DeviceType ourDevice = null;
+  private Handler ourResHandler = null;
 
   private UUID ourUUID = null;
   private ArrayList<DeviceType> ourDevices = new ArrayList();
 
-  ConnectDevice (DeviceType ldev, TextView lv)     // Assign our connection methodology 11/06/2014 only client is supported
+  ConnectDevice (DeviceType ldev, TextView lv, Handler hdlr)     // Assign our connection methodology 11/06/2014 only client is supported
   { this.ourDevice = ldev;                         // Assign our device
     // this.ourUUID = UUID.randomUUID();
     this.ourUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     this.ourStatusTF = lv;
+    this.ourResHandler = hdlr;
   }
 
+  @Override
   public void run()
   { EnableBT();                             // Enable the adapter if it is not already
-    if (getLogicalStatus() == ConnectDevice.LogStat.Enabled)
+    if ((getLogicalStatus() == ConnectDevice.LogStat.Enabled) ||
+       (getLogicalStatus() == ConnectDevice.LogStat.Paired))
     { ConnectMe (this.ourDevice);
     }
   }
@@ -74,7 +85,8 @@ public class ConnectDevice extends Thread implements Runnable
       }
     }
     catch (final Exception e)
-    { showThreadMsg("Enable Exception ! "+e.getMessage());
+    { showThreadMsg("CD Enable Exception ! "+e.getMessage());
+      ourResHandler.sendEmptyMessage(1);
       return false;
     }
     return true;
@@ -95,20 +107,31 @@ public class ConnectDevice extends Thread implements Runnable
       catch (IllegalArgumentException e) { showThreadMsg("Illegal Argument !"); }
       catch (IllegalAccessException e) { showThreadMsg("Illegal Access !"); }
       catch (InvocationTargetException e) { showThreadMsg("Invocation Target Err !"); }
-      showThreadMsg("Socket Acquired");
-
 
       showThreadMsg("Pairing With " + this.ourSocket.getRemoteDevice().getName());
       this.ourSocket.connect();
-      showThreadMsg("Socket is Connected !");
+
       ourLogicalStatus = LogStat.Connected;
+      ourResHandler.sendEmptyMessage(0);       // Send our results to the UI
     }
     catch (IOException e)
-    { showThreadMsg("IO Exception 1: " + e.getMessage());   // !!! Must Inform User !!!
+    { showThreadMsg("CD IO Exception 1: " + e.getMessage());   // !!! Must Inform User !!!
       try { this.ourSocket.close (); }
       catch (Exception e2) { }
+      ourResHandler.sendEmptyMessage(1);
+      return false;
     }
     return true;
+  }
+
+  public void CloseConnection ()
+  { try
+    { ourSocket.close();
+      ourLogicalStatus = LogStat.closed;
+    }
+    catch (IOException ioe)
+    { showThreadMsg("Exception Closing Connection: " + ioe.getMessage());   // !!! Must Inform User !!!
+    }
   }
 
   private void showThreadMsg (final String msg)
@@ -120,6 +143,13 @@ public class ConnectDevice extends Thread implements Runnable
 
   public LogStat getLogicalStatus ()
   { return (this.ourLogicalStatus);
+  }
+
+  public BluetoothSocket getConnectedSocket ()    // Provide access to the connected socket
+  { if (ourLogicalStatus == LogStat.Connected)    // Make sure we're connected
+      return this.ourSocket;
+    else
+      return (null);
   }
 }
 

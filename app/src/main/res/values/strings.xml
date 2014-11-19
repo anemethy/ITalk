@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">ITalk</string>
+    <string name="abmenu_action_exit">Exit</string>
     <string name="abmenu_action_settings">Settings</string>
     <string name="title_activity_ConnectDevice">ConnectDevice</string>
 
@@ -13,7 +14,7 @@
     <string name="devstatlabel">Device Status: </string>
     <string name="batterylvl">Battery Life: </string>
 
-    <string name="bufdatlabel">-- Buffer Data --</string>
+    <string name="bufdatlabel">-- Data Buffer --</string>
 
     <string name="statusdatlabel">Status:</string>
 
